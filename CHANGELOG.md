@@ -5,6 +5,23 @@
 All notable changes are recorded here. Format follows [Keep a Changelog](https://keepachangelog.com/);
 versioning follows [Semantic Versioning](https://semver.org/).
 
+## [1.0.0] — 2026-09-21
+
+First public release. Everything before it (0.1.x) was an unpublished development snapshot.
+
+### Included
+
+- Multi-instance ComfyUI orchestration: read every endpoint's GPU, free VRAM and queue depth, then dispatch each generation job to the idlest eligible instance
+- Three tools: `comfyui_farm_status`, `comfyui_farm_pick` and `comfyui_farm_run`
+- Two-stage selection: filter on reachability, a VRAM floor and a queue ceiling, then rank by free VRAM minus queue depth times a weight
+- Automatic retry on probe failure, because a single timeout across an SSH tunnel is not proof that an instance is down
+- Zero runtime dependencies — Node's built-in `fetch` and `AbortController` only
+
+### Compatibility
+
+- Developed and verified against dsh `0.1.5-rc.2` and `0.1.6-alpha.2`
+- Host APIs used: `ctx.tools.register`, `ctx.get`, `ctx.effect`, `ctx.logger`
+
 ## [0.1.0] — 2026-09-21
 
 First release.

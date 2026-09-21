@@ -5,6 +5,23 @@
 本文件记录所有值得注意的变更。格式参考 [Keep a Changelog](https://keepachangelog.com/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [1.0.0] — 2026-09-21
+
+首个公开发布版。它之前的一切（0.1.x）都是未发布的开发期快照。
+
+### 包含
+
+- 多实例 ComfyUI 编排：读出每个端点的 GPU、空闲显存与队列深度，再把每个生成任务派给最空闲且满足条件的实例
+- 三个工具：`comfyui_farm_status`、`comfyui_farm_pick` 与 `comfyui_farm_run`
+- 两段式选择：先按可达性、显存门槛与队列上限过滤，再按「空闲显存 － 队列深 × 权重」排序
+- 探测失败自动重试，因为跨 SSH 隧道的一次超时不足以证明实例已下线
+- 零运行时依赖 —— 只用 Node 内置的 `fetch` 与 `AbortController`
+
+### 兼容性
+
+- 在 dsh `0.1.5-rc.2` 与 `0.1.6-alpha.2` 上开发并验证过
+- 用到的宿主 API：`ctx.tools.register`、`ctx.get`、`ctx.effect`、`ctx.logger`
+
 ## [0.1.0] — 2026-09-21
 
 首个版本。

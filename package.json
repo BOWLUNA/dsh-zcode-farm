@@ -1,6 +1,6 @@
 {
   "name": "dsh-zcode-farm",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Let a DeepSeek Harness agent see every ComfyUI instance in a farm and dispatch each generation job to the idlest one, instead of always hitting the busiest single endpoint.",
   "license": "MIT",
   "type": "module",
