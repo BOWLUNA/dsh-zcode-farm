@@ -6,7 +6,7 @@
 
 | Version | Supported |
 | --- | --- |
-| `1.0.0` | Supported — declared range is `>=0.1.5-rc.2 <0.2.0-0`, and CI runs the suite against both lines |
+| `1.0.1` | Supported — declared range is `>=0.1.5-rc.2 <0.2.0-0`, and CI runs the suite against both lines |
 
 ## Reporting a vulnerability
 

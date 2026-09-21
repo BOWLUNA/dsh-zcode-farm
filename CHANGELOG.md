@@ -5,6 +5,20 @@
 All notable changes are recorded here. Format follows [Keep a Changelog](https://keepachangelog.com/);
 versioning follows [Semantic Versioning](https://semver.org/).
 
+## [1.0.1] — 2026-09-21
+
+### Fixed
+
+- **The test gate was silently switched off on Node 24.** `test/run.mjs` read the suite totals by matching `# pass N` in the runner's output. Node 24 changed the default test reporter to `spec` even when stdout is not a TTY, so that line became `ℹ pass N`, the regular expression matched nothing, and every suite parsed as "0 passed, 0 failed". The damage was not a red build: on Node 24 the runner printed a green tick and exited 0 **while assertions were failing**, because it never counted a single failure. The `test` workflow did go red on that leg — but at a later step, the documentation-numbers guard, which reads the same totals and reported five documents as wrong. The error message then pointed at the documentation, and following its advice would have written "0 checks" into five files and disabled the gate for good.
+
+  The runner now pins `--test-reporter=tap`, and treats unreadable output as a failure in its own right: a suite whose summary cannot be parsed counts as failed, and collecting zero checks overall is an error rather than a pass.
+
+  Symptom and cause were far apart here, so the fix is verified in both directions. With a deliberately failing assertion injected, the runner goes red on Node 20, 22 and 24; with that assertion removed it goes green again. Pinning the reporter was also tested by reverting it — the runner then reports that the result could not be parsed and exits 1, instead of quietly passing.
+
+### Notes
+
+- The shipped code is unchanged. `test/` is not listed in `files`, so the fix itself adds nothing to the tarball; the only things that differ from `1.0.0` are the version field and the documentation. Verified with `npm pack --dry-run`: 36 files, no `test/` entry.
+
 ## [1.0.0] — 2026-09-21
 
 First public release. Everything before it (0.1.x) was an unpublished development snapshot.

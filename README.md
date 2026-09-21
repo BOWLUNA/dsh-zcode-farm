@@ -150,5 +150,5 @@ MIT
 
 - **1 suite**, **15 checks** — run `node test/run.mjs`
 - Declared compatibility: `>=0.1.5-rc.2 <0.2.0-0` (see `engines.dsh` and the peer range)
-- Pin the version to bypass pnpm's release cooldown: `dsh plugin --profile web add dsh-zcode-farm@1.0.0`
+- Pin the version to bypass pnpm's release cooldown: `dsh plugin --profile web add dsh-zcode-farm@1.0.1`
 - Verified against five SSH-tunnelled ComfyUI instances plus one switchable forwarder

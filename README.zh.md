@@ -150,5 +150,5 @@ MIT
 
 - **1 个套件**、**15 项检查** —— 跑 `node test/run.mjs`
 - 声明兼容范围：`>=0.1.5-rc.2 <0.2.0-0`（见 `engines.dsh` 与 peer 范围）
-- 钉住版本可绕过 pnpm 的发布冷却期：`dsh plugin --profile web add dsh-zcode-farm@1.0.0`
+- 钉住版本可绕过 pnpm 的发布冷却期：`dsh plugin --profile web add dsh-zcode-farm@1.0.1`
 - 已在 5 个 SSH 隧道实例 + 1 个可切换转发口上验证
