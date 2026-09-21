@@ -35,11 +35,16 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24'
           registry-url: 'https://registry.npmjs.org'
 
       - name: Install the harness for its peer packages
         run: npm install --no-save --no-audit --no-fund @deepseek-ai/dsh@0.1.6-alpha.2
+
+      # `dsh plugin` looks for pnpm on PATH; without it the boot check cannot even
+      # install the plugin. The test workflow installs it for the same reason.
+      - name: Install pnpm (the boot check needs it on PATH)
+        run: npm install -g --no-audit --no-fund pnpm@12
 
       # The same guards the test workflow runs. A release that skips them is a
       # release nobody checked. The last one is the only guard that can catch a

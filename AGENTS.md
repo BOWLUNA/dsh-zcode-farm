@@ -42,3 +42,14 @@ bash tools/boot-check.sh                           # 真装一次、真启动一
 - `/prompt` returns `number` as a **cumulative server counter**, not a queue position — measured, it returns 22 while the queue is empty.
 - A failed probe is retried **once on purpose**: the same instance once timed out at `>3s` and answered in `106ms` on the very next call.
 - Two entries can point at the same backend (a switchable forwarder plus its real target). The plugin reports them separately and does **not** try to deduplicate — probing cannot tell them apart.
+- **The harness needs node >= 22.19.0, but `package.json` says `engines.node: ">=20"`.** Measured
+  2026-09-21: on node 20, `npm install --no-save @deepseek-ai/dsh@0.1.6-alpha.2` reports
+  "added **10** packages" and leaves no `node_modules/.bin/dsh`; on node 24 the same command reports
+  488–520 packages. The harness's dependency tree contains packages requiring `>=22.19.0`
+  (`undici`, `@deepseek-ai/libreoffice-kit`, `@earendil-works/pi-ai`). Re-measured with npm 10 on
+  node 24 (490 packages) to rule the npm version out — it is node 20. The declared range is therefore
+  optimistic; `engines.node` and the CI matrix should be aligned in a release that bumps the version.
+  The boot check is gated to `node != 20` for this reason.
+- **`dsh plugin` needs `pnpm` on PATH.** Without it the plugin manager refuses with
+  "pnpm not found on PATH — install pnpm to manage profile plugins". Local machines have it; CI must
+  install it explicitly.

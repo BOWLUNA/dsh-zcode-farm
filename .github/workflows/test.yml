@@ -35,6 +35,12 @@ jobs:
       - name: 装宿主（只为让 peer 能被解析；插件本身零运行时依赖）
         run: npm install --no-save --no-audit --no-fund @deepseek-ai/dsh@${{ matrix.dsh }}
 
+      # `dsh plugin` 会去 PATH 上找 pnpm 来管理 profile 的插件，找不到就直接报
+      # 「pnpm not found on PATH — install pnpm to manage profile plugins」。
+      # 本机的开发环境一直有 pnpm，所以第 6 道守卫第一次上 CI 才发现这个前提没被写下来。
+      - name: 装 pnpm（`dsh plugin` 需要它在 PATH 上）
+        run: npm install -g --no-audit --no-fund pnpm@12
+
       - name: 1) 测试与检查数
         run: node test/run.mjs
 
@@ -61,5 +67,19 @@ jobs:
       #
       #   这一步本身也做过双向验证：注入上面那个变异 ⇒ 红；还原 ⇒ 绿。
       #   没有做过双向验证的守卫等于没有守卫。
+      #
+      #   ⚠️ 只在 node >= 22 的腿上跑：harness 的依赖树里有包要求 node >= 22.19.0
+      #   （undici / @deepseek-ai/libreoffice-kit / @earendil-works/pi-ai），
+      #   实测 node 20 上 `npm install @deepseek-ai/dsh@0.1.6-alpha.2` 只装入 **10** 个包
+      #   （node 24 上是 488–520 个）、装不出 `node_modules/.bin/dsh`。
+      #   见 AGENTS.md 的「Facts that are easy to get wrong」最后一条。
       - name: 6) 真启动（装得上 + 起得来）
+        if: matrix.node-version != '20'
         run: BOOT_PORT=31841 bash tools/boot-check.sh
+
+      - name: 6) 跳过说明（本腿装不出宿主）
+        if: matrix.node-version == '20'
+        run: |
+          echo "::warning::本腿（node ${{ matrix.node-version }}）跳过了第 6 道守卫 —— 它装不出宿主。" \
+               "实测 node 20 上 npm install @deepseek-ai/dsh 只装入 10 个包、没有 node_modules/.bin/dsh；" \
+               "harness 的依赖树要求 node >= 22.19.0。前 5 道仍然照跑。见 AGENTS.md 的同条说明。"
