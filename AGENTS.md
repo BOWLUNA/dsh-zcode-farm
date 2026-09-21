@@ -9,6 +9,11 @@
   fix the document or the code. (Adapting their hard-coded paths to this repository was a one-off.)
 - **Do not change one side of a bilingual pair alone.** Edit both, then re-record:
   `node tools/verify-translation-pairing.mjs --write`.
+- **Do not rename the loader row in `cordis.patch.yml` without renaming the package.** The row's
+  `name` is resolved as a package name at boot. If the two drift apart the plugin **installs fine
+  and then refuses to boot** with `ERR_MODULE_NOT_FOUND` — while `--dump-config` still exits 0
+  with no stderr, because it composes the tree without applying it. `tools/boot-check.sh` is the
+  guard for this, and it is the only one of the six that can see it.
 - **Do not remove `output.render` from a tool definition.** DSH validates the tool contract at registration;
   a missing `render` is a hard failure, not a degraded feature.
 - **Do not commit credentials.** Reference key names only, never values.
@@ -19,6 +24,7 @@
 - `src/farm.js` — probe, score and pick (pure; no DSH imports, so it unit-tests standalone)
 - `src/workflow.js` — the minimal text-to-image graph and output flattening
 - `probes/` — runnable diagnostics that need neither DSH nor the host
+- `tools/boot-check.sh` — installs this checkout into a throwaway `DSH_HOME` and really boots it
 
 ## Before you commit
 
@@ -28,6 +34,7 @@ node tools/verify-translation-pairing.mjs --write
 node tools/verify-doc-numbers.mjs
 bash -n install.sh && bash -n uninstall.sh
 node tools/verify-version-consistency.mjs --dsh 0.1.6-alpha.2
+bash tools/boot-check.sh                           # 真装一次、真启动一次
 ```
 
 ## Facts that are easy to get wrong

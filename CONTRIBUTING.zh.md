@@ -11,7 +11,7 @@
 
 ## 每次提交前请跑
 
-测试为 **1 个套件、15 项检查** —— 下面五条命令必须全绿。
+测试为 **1 个套件、15 项检查** —— 下面六条命令必须全绿。
 
 ```bash
 node test/run.mjs                                    # 测试与检查数
@@ -19,7 +19,11 @@ node tools/verify-translation-pairing.mjs --write    # 改了任一侧就重录�
 node tools/verify-doc-numbers.mjs                    # 文档里的数字 vs 真实运行
 bash -n install.sh && bash -n uninstall.sh           # shell 语法
 node tools/verify-version-consistency.mjs --dsh 0.1.6-alpha.2
+bash tools/boot-check.sh                             # 真装一次、真启动一次
 ```
+
+六条里只有 `tools/boot-check.sh` 能抓住「**装得上但起不来**」的插件 ——
+`--dump-config` 只合成配置、不 apply，因此装配行的 `name` 与包名脱节时它会**报成通过**。
 
 ## 规矩
 

@@ -1,4 +1,6 @@
-# 测试矩阵。三道守卫全跑 —— 本仓库真的因为「改了数字忘重录配对哈希」让整片矩阵红过一次。
+# 测试矩阵。六道守卫全跑 —— 本仓库真的因为「改了数字忘重录配对哈希」让整片矩阵红过一次，
+# 也真的因为「解析 TAP 没钉 reporter」让 node-24 的腿连续红过四次（见 tools/boot-check.sh 与
+# test/run.mjs 的文件头注释）。最近补上的是第 6 道：真装 + 真启动。
 #
 # `tools/verify-version-consistency.mjs` 会从本文件里读 `@deepseek-ai/dsh@<version>` 的钉定，
 # 断言它落在 `package.json` 的 `engines.dsh` 范围里。CI 里传的是 `--dsh ${{ matrix.dsh }}`。
@@ -47,3 +49,17 @@ jobs:
 
       - name: 5) 版本一致性
         run: node tools/verify-version-consistency.mjs --dsh ${{ matrix.dsh }}
+
+      # ★ 真装 + 真启动。**这是唯一能抓「装得上但起不来」的守卫。**
+      #
+      #   为什么前面五道抓不到：`--dump-config` 只合成配置、不 apply 插件 ——
+      #   行的 `name` 解析失败时它**不报错**，只是不打印 `packageDir`。
+      #   实测（2026-09-21，本仓库的变异副本）：把 `cordis.patch.yml` 的行 name 改成
+      #   解析不到的旧名之后，`--dump-config` 依然 exit 0 / stderr 0，
+      #   而真启动 exit 1 / **stderr 5673 字节** / `ERR_MODULE_NOT_FOUND`。
+      #   兄弟仓库 `dsh-zcode-scribe` 就是靠这个机制在发布后炸的（stderr 7231 字节）。
+      #
+      #   这一步本身也做过双向验证：注入上面那个变异 ⇒ 红；还原 ⇒ 绿。
+      #   没有做过双向验证的守卫等于没有守卫。
+      - name: 6) 真启动（装得上 + 起得来）
+        run: BOOT_PORT=31841 bash tools/boot-check.sh

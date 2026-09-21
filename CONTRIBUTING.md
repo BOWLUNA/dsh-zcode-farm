@@ -11,7 +11,7 @@
 
 ## Run these before every commit
 
-The suite is **1 suite, 15 checks** — all five commands below must be green.
+The suite is **1 suite, 15 checks** — all six commands below must be green.
 
 ```bash
 node test/run.mjs                                    # suite and check counts
@@ -19,7 +19,13 @@ node tools/verify-translation-pairing.mjs --write    # re-record pairing hashes 
 node tools/verify-doc-numbers.mjs                    # documented numbers vs reality
 bash -n install.sh && bash -n uninstall.sh           # shell syntax
 node tools/verify-version-consistency.mjs --dsh 0.1.6-alpha.2
+bash tools/boot-check.sh                             # install it and really boot it
 ```
+
+`tools/boot-check.sh` is the only one of the six that can catch a plugin which
+**installs but refuses to boot** — `--dump-config` composes the tree without
+applying it, so a loader row whose `name` no longer matches the package is
+reported as a pass.
 
 ## Rules
 

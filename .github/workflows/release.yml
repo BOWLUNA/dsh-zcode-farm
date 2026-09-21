@@ -42,7 +42,8 @@ jobs:
         run: npm install --no-save --no-audit --no-fund @deepseek-ai/dsh@0.1.6-alpha.2
 
       # The same guards the test workflow runs. A release that skips them is a
-      # release nobody checked.
+      # release nobody checked. The last one is the only guard that can catch a
+      # plugin which installs but refuses to boot — see tools/boot-check.sh.
       - name: Guards
         run: |
           node test/run.mjs
@@ -50,6 +51,7 @@ jobs:
           node tools/verify-doc-numbers.mjs
           node tools/verify-version-consistency.mjs --dsh 0.1.6-alpha.2
           bash -n install.sh && bash -n uninstall.sh
+          BOOT_PORT=31841 bash tools/boot-check.sh
 
       # Publishing twice is not an error worth failing on, but publishing a
       # *different* build under an existing version is impossible, so the check is
