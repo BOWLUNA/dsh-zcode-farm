@@ -1,0 +1,37 @@
+# AGENTS.md — rules for coding agents in this repository
+
+> Scope: **this repository**. Workspace-level conventions live in the plugin workspace's own `AGENTS.md`.
+> The short version: a claim without a command and its raw output is not a claim.
+
+## Do not break these
+
+- **Do not edit `tools/verify-*.mjs` to make a check pass.** They read real runtime results; when they fail,
+  fix the document or the code. (Adapting their hard-coded paths to this repository was a one-off.)
+- **Do not change one side of a bilingual pair alone.** Edit both, then re-record:
+  `node tools/verify-translation-pairing.mjs --write`.
+- **Do not remove `output.render` from a tool definition.** DSH validates the tool contract at registration;
+  a missing `render` is a hard failure, not a degraded feature.
+- **Do not commit credentials.** Reference key names only, never values.
+
+## Layout
+
+- `index.js` — plugin entry: `name` / `inject` / `Config` / `apply`, plus the three tool definitions
+- `src/farm.js` — probe, score and pick (pure; no DSH imports, so it unit-tests standalone)
+- `src/workflow.js` — the minimal text-to-image graph and output flattening
+- `probes/` — runnable diagnostics that need neither DSH nor the host
+
+## Before you commit
+
+```bash
+node test/run.mjs                                  # 1 suite, 15 checks
+node tools/verify-translation-pairing.mjs --write
+node tools/verify-doc-numbers.mjs
+bash -n install.sh && bash -n uninstall.sh
+node tools/verify-version-consistency.mjs --dsh 0.1.6-alpha.2
+```
+
+## Facts that are easy to get wrong
+
+- `/prompt` returns `number` as a **cumulative server counter**, not a queue position — measured, it returns 22 while the queue is empty.
+- A failed probe is retried **once on purpose**: the same instance once timed out at `>3s` and answered in `106ms` on the very next call.
+- Two entries can point at the same backend (a switchable forwarder plus its real target). The plugin reports them separately and does **not** try to deduplicate — probing cannot tell them apart.

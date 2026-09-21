@@ -1,0 +1,49 @@
+# 测试矩阵。三道守卫全跑 —— 本仓库真的因为「改了数字忘重录配对哈希」让整片矩阵红过一次。
+#
+# `tools/verify-version-consistency.mjs` 会从本文件里读 `@deepseek-ai/dsh@<version>` 的钉定，
+# 断言它落在 `package.json` 的 `engines.dsh` 范围里。CI 里传的是 `--dsh ${{ matrix.dsh }}`。
+# 已知钉定：@deepseek-ai/dsh@0.1.6-alpha.2（范围为 >=0.1.5-rc.2 <0.2.0-0，两者都覆盖）。
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        node-version: ['20', '24']
+        dsh: ['0.1.6-alpha.2']
+        include:
+          - os: ubuntu-latest
+            node-version: '24'
+            dsh: '0.1.5-rc.2'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: 装宿主（只为让 peer 能被解析；插件本身零运行时依赖）
+        run: npm install --no-save --no-audit --no-fund @deepseek-ai/dsh@${{ matrix.dsh }}
+
+      - name: 1) 测试与检查数
+        run: node test/run.mjs
+
+      - name: 2) 双语配对
+        run: node tools/verify-translation-pairing.mjs
+
+      - name: 3) 文档数字
+        run: node tools/verify-doc-numbers.mjs
+
+      - name: 4) shell 语法
+        run: bash -n install.sh && bash -n uninstall.sh
+
+      - name: 5) 版本一致性
+        run: node tools/verify-version-consistency.mjs --dsh ${{ matrix.dsh }}

@@ -1,0 +1,78 @@
+{
+  "name": "dsh-zcode-farm",
+  "version": "0.1.0",
+  "description": "Let a DeepSeek Harness agent see every ComfyUI instance in a farm and dispatch each generation job to the idlest one, instead of always hitting the busiest single endpoint.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./src/farm.js": "./src/farm.js",
+    "./src/workflow.js": "./src/workflow.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "src",
+    "probes",
+    "cordis.patch.yml",
+    "README.md",
+    "README.zh.md",
+    "README.i18n.yaml",
+    "CHANGELOG.md",
+    "CHANGELOG.zh.md",
+    "CHANGELOG.i18n.yaml",
+    "CONTRIBUTING.md",
+    "CONTRIBUTING.zh.md",
+    "CONTRIBUTING.i18n.yaml",
+    "SECURITY.md",
+    "SECURITY.zh.md",
+    "SECURITY.i18n.yaml",
+    "AGENTS.md",
+    "LICENSE",
+    "install.sh",
+    "uninstall.sh",
+    "docs",
+    "package.json"
+  ],
+  "engines": {
+    "node": ">=20",
+    "dsh": ">=0.1.5-rc.2 <0.2.0-0"
+  },
+  "scripts": {
+    "test": "node test/run.mjs",
+    "probe": "node probes/probe-farm.mjs",
+    "verify": "node test/run.mjs && node tools/verify-translation-pairing.mjs && node tools/verify-doc-numbers.mjs"
+  },
+  "keywords": [
+    "deepseek",
+    "harness",
+    "dsh",
+    "dsh-plugin",
+    "zcode",
+    "cordis",
+    "comfyui",
+    "orchestration",
+    "load-balancer",
+    "multi-gpu",
+    "instance-pool",
+    "image-generation"
+  ],
+  "peerDependencies": {
+    "@deepseek-ai/dsh": ">=0.1.5-rc.2 <0.2.0-0"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/dsh": {
+      "optional": true
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "tag": "latest"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

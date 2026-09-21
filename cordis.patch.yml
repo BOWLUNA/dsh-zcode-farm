@@ -1,0 +1,15 @@
+# dsh-zcode-farm bundle patch：把插件插进 profile 的层栈。
+#
+# 行 id `comfyui-farm` 全局唯一，与 `dsh-comfyui` 自己的 `comfyui` 行不冲突——
+# 两个插件可以同时装配、各管一层（farm 管调度，comfyui 管单端点深度体验）。
+- insert:
+    - id: comfyui-farm
+      name: 'dsh-zcode-farm'
+      # 用 `config` 覆盖默认值（整键替换，不是深合并——要写就写全）。
+      # config:
+      #   primaryUrl: 'http://127.0.0.1:8188'
+      #   instances:
+      #     - { id: gpu-18301, baseUrl: 'http://127.0.0.1:18301', label: '5090 分片' }
+      #     - { id: gpu-18303, baseUrl: 'http://127.0.0.1:18303', label: 'Blackwell 102G' }
+      #   needVramGb: 8
+      #   maxQueueDepth: 3
