@@ -1,0 +1,46 @@
+name: Feature request
+description: Propose a capability, or argue that a current design choice is wrong.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This plugin is deliberately narrow, and every proposal is weighed
+        against three existing choices: zero runtime dependencies, a failed probe is
+        retried rather than reported as "down", and instance ranking is dominated by
+        queue depth rather than free VRAM. A request that would change one of those
+        must say what it trades away and what replaces it.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What are you unable to do today?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behaviour
+    validations:
+      required: true
+
+  - type: dropdown
+    id: safety
+    attributes:
+      label: Does this change a documented design choice?
+      options:
+        - No - it is additive and does not change existing behaviour
+        - Yes - it adds a runtime dependency
+        - Yes - it changes how a failed probe is treated
+        - Yes - it changes how instances are ranked or filtered
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternative
+    attributes:
+      label: What else did you consider
+    validations:
+      required: false

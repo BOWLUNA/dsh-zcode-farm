@@ -1,0 +1,63 @@
+name: Bug report
+description: Something behaved differently from what the documentation says.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Two details make bugs here much faster to fix:
+
+        1. **The dsh version**, because the tool-authoring DSL changed between
+           0.1.5-rc.2 and 0.1.6-alpha.2.
+        2. **The output of `comfyui_farm_status`**, because most surprises here are
+           about *which* instance was considered eligible and why.
+
+  - type: input
+    id: dsh-version
+    attributes:
+      label: dsh version
+      description: The output of `dsh --version`.
+      placeholder: 0.1.6-alpha.2
+    validations:
+      required: true
+
+  - type: input
+    id: plugin-version
+    attributes:
+      label: dsh-zcode-farm version
+      description: The `version` field of the installed package.
+      placeholder: 1.0.0
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      placeholder: Windows 11 / Ubuntu 24.04 / macOS 15
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: The exact tool call and its raw output, if you have them.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected instead
+    validations:
+      required: true
+
+  - type: textarea
+    id: farm-status
+    attributes:
+      label: Farm status
+      description: Output of `comfyui_farm_status`, with any private hostnames redacted.
+      render: text
+    validations:
+      required: false

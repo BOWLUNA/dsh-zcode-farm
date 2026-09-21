@@ -1,0 +1,52 @@
+# Publishing is tag-driven:
+#   git tag -a v<version> -m "v<version>" && git push origin v<version>
+#
+# Auth uses npm Trusted Publishing (OIDC) rather than a stored token, so no
+# NODE_AUTH_TOKEN lives in this repository's secrets. That needs a one-time
+# configuration on npmjs.com — the package's Settings -> Trusted Publisher must
+# name this repository and this workflow file. Until that exists the publish step
+# fails at authentication, which is a setup problem rather than a code one.
+#
+# `publishConfig.tag` is deliberately absent: this publishes `latest` explicitly,
+# because a silent tag mismatch shows up as "the release succeeded but nobody got
+# the new version".
+name: release
+
+permissions:
+  contents: read
+  id-token: write
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install the harness for its peer packages
+        run: npm install --no-save --no-audit --no-fund @deepseek-ai/dsh@0.1.6-alpha.2
+
+      # The same guards the test workflow runs. A release that skips them is a
+      # release nobody checked.
+      - name: Guards
+        run: |
+          node test/run.mjs
+          node tools/verify-translation-pairing.mjs
+          node tools/verify-doc-numbers.mjs
+          node tools/verify-version-consistency.mjs --dsh 0.1.6-alpha.2
+          bash -n install.sh && bash -n uninstall.sh
+
+      # Publishing twice is not an error worth failing on, but publishing a
+      # *different* build under an existing version is impossible, so the check is
+      # "does this version exist yet", not "did the last run succeed".
+      - name: Publish unless this version already exists
+        run: node tools/publish-if-new.mjs
