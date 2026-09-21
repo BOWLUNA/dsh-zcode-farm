@@ -18,6 +18,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 ### Notes
 
 - The shipped code is unchanged. `test/` is not listed in `files`, so the fix itself adds nothing to the tarball; the only things that differ from `1.0.0` are the version field and the documentation. Verified with `npm pack --dry-run`: 36 files, no `test/` entry.
+- The release workflow now creates the GitHub Release. Its `permissions` block said `contents: read` and no step created one, so tagging this release produced a tag while the repository's Releases panel stayed on `v1.0.0` — the code was updated and the front page looked untouched. It is now `contents: write`, with a step that takes the release body from this file's entry for the tag.
 
 ## [1.0.0] — 2026-09-21
 

@@ -13,7 +13,13 @@
 name: release
 
 permissions:
-  contents: read
+  # ★ `contents` must be write, not read: besides publishing to npm this workflow
+  #   creates the GitHub Release. It used to be read and had no such step, so
+  #   pushing a tag left the repository's Releases panel frozen on the previous
+  #   version — the code was updated and the front page looked untouched. Hit for
+  #   real on 2026-09-21: v1.0.1 was tagged, npm was attempted, and no Release
+  #   appeared.
+  contents: write
   id-token: write
 
 on:
@@ -48,5 +54,36 @@ jobs:
       # Publishing twice is not an error worth failing on, but publishing a
       # *different* build under an existing version is impossible, so the check is
       # "does this version exist yet", not "did the last run succeed".
+      #
+      # `continue-on-error` is intentionally NOT set: a failed publish should still
+      # turn the run red, so the npm Trusted Publisher setup gap stays visible
+      # instead of hiding behind a green tick.
       - name: Publish unless this version already exists
         run: node tools/publish-if-new.mjs
+
+      # ★ Create the GitHub Release, with the body lifted straight out of the
+      #   CHANGELOG entry for this tag rather than retyped (retyped text drifts).
+      #   Runs even when the npm step above failed, so a missing npm credential
+      #   cannot also cost us the Release.
+      - name: Create the GitHub Release (body taken from the CHANGELOG)
+        if: ${{ always() && startsWith(github.ref, 'refs/tags/v') }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ github.ref_name }}"
+          VER="${TAG#v}"
+          node -e '
+            const fs = require("fs");
+            const [ver, file, out] = process.argv.slice(1);
+            const text = fs.readFileSync(file, "utf8");
+            const start = text.indexOf("## [" + ver + "]");
+            if (start === -1) { console.error("CHANGELOG has no section for " + ver); process.exit(1); }
+            const rest = text.slice(start + 1);
+            const next = rest.indexOf("\n## [");
+            fs.writeFileSync(out, (next === -1 ? rest : rest.slice(0, next)).trimEnd() + "\n");
+          ' "$VER" CHANGELOG.md /tmp/release-notes.md
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists - nothing to do"
+            exit 0
+          fi
+          gh release create "$TAG" --title "$TAG" --notes-file /tmp/release-notes.md

@@ -29,6 +29,10 @@
 
 - 发布出去的**代码**没有变化。`test/` 不在 `files` 清单里，所以这次修复本身不往包里加任何东西；
   与 `1.0.0` 的差别只有版本号字段和文档。用 `npm pack --dry-run` 核对过：36 个文件，其中没有 `test/`。
+- 发布工作流现在会创建 GitHub Release。它的 `permissions` 写的是 `contents: read`，也没有任何一步
+  去建 Release，于是给这次发布打上 tag 之后，仓库的 Releases 面板仍停在 `v1.0.0` ——
+  代码更新了，首页却像什么都没发生。现在改成 `contents: write`，并加了一步：
+  Release 正文直接取本文件里该 tag 对应的小节。
 
 ## [1.0.0] — 2026-09-21
 
