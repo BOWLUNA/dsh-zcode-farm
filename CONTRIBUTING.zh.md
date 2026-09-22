@@ -19,10 +19,10 @@ node tools/verify-translation-pairing.mjs --write    # 改了任一侧就重录�
 node tools/verify-doc-numbers.mjs                    # 文档里的数字 vs 真实运行
 bash -n install.sh && bash -n uninstall.sh           # shell 语法
 node tools/verify-version-consistency.mjs --dsh 0.1.6-alpha.2
-bash tools/boot-check.sh                             # 真装一次、真启动一次
+node tools/boot-check.mjs --port 31841               # 真装一次、真启动一次
 ```
 
-六条里只有 `tools/boot-check.sh` 能抓住「**装得上但起不来**」的插件 ——
+六条里只有 `tools/boot-check.mjs` 能抓住「**装得上但起不来**」的插件 ——
 `--dump-config` 只合成配置、不 apply，因此装配行的 `name` 与包名脱节时它会**报成通过**。
 
 ## 规矩

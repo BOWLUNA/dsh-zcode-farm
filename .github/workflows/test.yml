@@ -68,6 +68,10 @@ jobs:
       #   这一步本身也做过双向验证：注入上面那个变异 ⇒ 红；还原 ⇒ 绿。
       #   没有做过双向验证的守卫等于没有守卫。
       #
+      #   规范形态见 tools/boot-check.mjs 的文件头：四条断言 A/B/C/D，
+      #   断言 C 落在「端口是否应答」而不是「打印了监听 URL」（后者是版本相关的 ——
+      #   dsh 0.1.5-rc.2 启动成功却 stdout 零字节）。
+      #
       #   ⚠️ 只在 node >= 22 的腿上跑：harness 的依赖树里有包要求 node >= 22.19.0
       #   （undici / @deepseek-ai/libreoffice-kit / @earendil-works/pi-ai），
       #   实测 node 20 上 `npm install @deepseek-ai/dsh@0.1.6-alpha.2` 只装入 **10** 个包
@@ -75,7 +79,7 @@ jobs:
       #   见 AGENTS.md 的「Facts that are easy to get wrong」最后一条。
       - name: 6) 真启动（装得上 + 起得来）
         if: matrix.node-version != '20'
-        run: BOOT_PORT=31841 bash tools/boot-check.sh
+        run: node tools/boot-check.mjs --port 31841
 
       - name: 6) 跳过说明（本腿装不出宿主）
         if: matrix.node-version == '20'
