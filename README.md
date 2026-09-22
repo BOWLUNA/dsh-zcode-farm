@@ -18,7 +18,7 @@ dsh plugin --profile web add dsh-zcode-farm
 | | `dsh-comfyui` (77★) | **this plugin** |
 | --- | --- | --- |
 | Endpoints it can address | one | **many, probed concurrently** |
-| Queue depth | not modelled | **weighted into the ranking** |
+| Queue depth | read from `/queue`, but with one instance it informs the user rather than a choice | **weighted into the ranking, across instances** |
 | When the job lands | on that one instance | on the instance with the **most free VRAM and an empty queue** |
 | Writes to ComfyUI | yes | **yes (`comfyui_farm_run`), but reading is enough** |
 
@@ -104,14 +104,16 @@ busy large one.
 
 ## Relationship to `dsh-comfyui`: complementary, not competing
 
-| | `dsh-comfyui` (77★) | `dsh-zcode-farm` | How it is checked |
+| | `dsh-comfyui` (77★) | `dsh-zcode-farm` | How to check the `dsh-comfyui` side |
 | --- | --- | --- | --- |
-| Scope | **one** endpoint | **a whole** farm | `test/fixtures/farm-snapshot-2026-09-21.json` (6 endpoints) |
-| Strength | workflow library, skill packs, canvas, asset panel | awareness, selection, dispatch | `src/farm.js`, three tools |
-| How a job is routed | wherever the single endpoint is | ranked by `free VRAM − depth × weight` | `test/ordering.test.mjs`, `tools/ordering-replay.mjs` |
-| Assembly row id | `comfyui` | `comfyui-farm` | `cordis.patch.yml` |
+| Scope | **one** endpoint | **a whole** farm | `grep -n baseUrl package/lib/config.js` → one `z.string()` |
+| Strength | workflow library, skill packs, canvas, asset panel | awareness, selection, dispatch | `ls package/lib` |
+| How a job is routed | wherever the single endpoint is | ranked by `free VRAM − depth × weight` | `grep -n "constructor(baseUrl" package/lib/comfyui.js` |
+| Assembly row id | `comfyui` | `comfyui-farm` | both appear in this repo's `cordis.patch.yml` |
 
 The row ids differ, so **both can be installed side by side**. Neither depends on the other.
+`dsh-comfyui`'s single-endpoint design is verified from its published source, not asserted —
+see "Reproducing the comparison" below for the three commands.
 
 ---
 
@@ -125,14 +127,43 @@ involved anywhere in this repository.
 
 Most cells below are therefore deliberately blank rather than filled with something invented.
 
-| What ZCode has | What this plugin took | What this plugin adds beyond it | Evidence |
+| What ZCode has | What this plugin took | What this plugin adds beyond it | Evidence (run it yourself) |
 | --- | --- | --- | --- |
-| Nothing for ComfyUI farm scheduling | —— | the whole probe → rank → dispatch loop | `src/farm.js`, `test/ordering.test.mjs` |
-| A memory-extraction sub-agent (`core/src/memory/extraction.ts`) | —— (different domain) | —— | —— |
-| Bilingual paired documents | adopted as the house convention | **extended to cover figure files** (`*.svg`), so a diagram can't drift from its translation | `docs/ordering-replay.i18n.yaml` |
-| Guard discipline — runnable checks before every commit | adopted as the house convention | **extended to six guards, the sixth being a real-boot check** | `tools/boot-check.mjs`, `AGENTS.md` |
+| Nothing for ComfyUI farm scheduling | —— | the whole probe → rank → dispatch loop | `grep -rli comfyui <zcode-checkout> \| wc -l` → **0** |
+| A memory-extraction sub-agent with two skip conditions (`apps/zcode-cli/packages/core/src/memory/extraction.ts:23`) | —— (different domain) | —— | *n/a — nothing was taken, so there is no claim to reproduce* |
+| Bilingual paired documents | adopted as the house convention | **extended to cover figure files** (`*.svg`), so a diagram can't drift from its translation | `node tools/verify-translation-pairing.mjs` |
+| Guard discipline — runnable checks before every commit | adopted as the house convention | **extended to six guards, the sixth being a real-boot check** | `node test/run.mjs` and `node tools/boot-check.mjs --port 32041` |
 
 A row reading `——` is an honest blank, not an oversight.
+
+---
+
+## Reproducing the comparison
+
+Nothing above needs to be taken on trust. These are the commands behind it:
+
+```bash
+git clone https://github.com/BOWLUNA/dsh-zcode-farm && cd dsh-zcode-farm
+node test/run.mjs                        # 23 checks in 2 suites
+node tools/ordering-replay.mjs           # the ranking table behind the figure
+node tools/boot-check.mjs --port 32041   # really installs and really boots (needs a harness)
+```
+
+The `dsh-comfyui` claims are checked against its published package, not against this repo:
+
+```bash
+npm view dsh-comfyui version                # 0.5.1
+npm pack dsh-comfyui@0.5.1 && tar xzf dsh-comfyui-0.5.1.tgz
+grep -n baseUrl package/lib/config.js       # a single string, not a list
+grep -n "constructor(baseUrl" package/lib/comfyui.js
+```
+
+```text
+9:    baseUrl: z.string().default('http://127.0.0.1:8188'),
+71:    constructor(baseUrl, apiKey, connectTimeoutMs, maxMediaBytes) {
+```
+
+Run on 2026-09-22 against `dsh-comfyui@0.5.1`.
 
 ---
 

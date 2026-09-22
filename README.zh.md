@@ -18,7 +18,7 @@ dsh plugin --profile web add dsh-zcode-farm
 | | `dsh-comfyui`（77★） | **本插件** |
 | --- | --- | --- |
 | 能寻址的端点 | 一个 | **多个，并发探测** |
-| 队列深度 | 不建模 | **加权进排序** |
+| 队列深度 | 会读 `/queue`，但只有一个实例时可比较的只有它自己 | **跨实例加权进排序** |
 | 任务落在哪 | 就那一台 | **空闲显存最多且队列为空**的那台 |
 | 会不会写 ComfyUI | 会 | **会（`comfyui_farm_run`），但只读也够用** |
 
@@ -107,15 +107,16 @@ dsh plugin --profile web add dsh-zcode-farm
 
 ## 与 `dsh-comfyui` 的关系：互补，可共存
 
-| | `dsh-comfyui`（77★） | `dsh-zcode-farm` | 怎么核 |
+| | `dsh-comfyui`（77★） | `dsh-zcode-farm` | `dsh-comfyui` 那一列怎么核 |
 | --- | --- | --- | --- |
-| 管的范围 | **一个**端点 | **一整个**农场 | `test/fixtures/farm-snapshot-2026-09-21.json`（6 个端点） |
-| 强项 | 工作流库、技能包、画布、资产面板 | 状态感知、选实例、派发 | `src/farm.js`、三个工具 |
-| 任务怎么落地 | 单端点在哪就发哪 | 按「空闲显存 − 队列深 × 权重」排序 | `test/ordering.test.mjs`、`tools/ordering-replay.mjs` |
-| 装配行 id | `comfyui` | `comfyui-farm` | `cordis.patch.yml` |
+| 管的范围 | **一个**端点 | **一整个**农场 | `grep -n baseUrl package/lib/config.js` → 一个 `z.string()` |
+| 强项 | 工作流库、技能包、画布、资产面板 | 状态感知、选实例、派发 | `ls package/lib` |
+| 任务怎么落地 | 单端点在哪就发哪 | 按「空闲显存 − 队列深 × 权重」排序 | `grep -n "constructor(baseUrl" package/lib/comfyui.js` |
+| 装配行 id | `comfyui` | `comfyui-farm` | 两个都出现在本仓库的 `cordis.patch.yml` 里 |
 
 两行 id 不同，**可以同时装配**：用 `dsh-comfyui` 管深度体验，用本插件决定"这活派给谁"。
 也可以只用其中一个。本插件不依赖 `dsh-comfyui`，反之亦然。
+`dsh-comfyui` 的单端点设计是**从它已发布的源码核出来的**，不是断言 —— 三条命令见下面「怎么自己复核这张表」。
 
 ---
 
@@ -127,14 +128,43 @@ dsh plugin --profile web add dsh-zcode-farm
 
 因此下表多数格子是**故意留白**的，而不是填上编出来的东西。
 
-| ZCode 有什么 | 本插件取了什么 | 本插件多了什么（**优于**在哪） | 证据 |
+| ZCode 有什么 | 本插件取了什么 | 本插件多了什么（**优于**在哪） | 证据（自己跑一遍） |
 | --- | --- | --- | --- |
-| 多实例 ComfyUI 调度：无 | —— | 整个「探测 → 排序 → 派发」闭环 | `src/farm.js`、`test/ordering.test.mjs` |
-| 记忆抽取子代理（`core/src/memory/extraction.ts`） | ——（不同领域） | —— | —— |
-| 双语配对文档 | 作为本工作区的约定沿用 | **扩展到了图文件**（`*.svg`）—— 示意图与译文不会再各自漂移 | `docs/ordering-replay.i18n.yaml` |
-| 守卫纪律 —— 提交前跑得动的检查 | 作为本工作区的约定沿用 | **扩展到六道，第六道是真启动检查** | `tools/boot-check.mjs`、`AGENTS.md` |
+| 多实例 ComfyUI 调度：无 | —— | 整个「探测 → 排序 → 派发」闭环 | `grep -rli comfyui <zcode 检出目录> \| wc -l` → **0** |
+| 带两个跳过条件的记忆抽取子代理（`apps/zcode-cli/packages/core/src/memory/extraction.ts:23`） | ——（不同领域） | —— | *不适用 —— 没取任何东西，所以没有主张要复核* |
+| 双语配对文档 | 作为本工作区的约定沿用 | **扩展到了图文件**（`*.svg`）—— 示意图与译文不会再各自漂移 | `node tools/verify-translation-pairing.mjs` |
+| 守卫纪律 —— 提交前跑得动的检查 | 作为本工作区的约定沿用 | **扩展到六道，第六道是真启动检查** | `node test/run.mjs` 与 `node tools/boot-check.mjs --port 32041` |
 
 写着 `——` 的行是**如实留白**，不是漏填。
+
+---
+
+## 怎么自己复核这张表
+
+上面每一条都不需要你相信 —— 下面就是它背后的命令：
+
+```bash
+git clone https://github.com/BOWLUNA/dsh-zcode-farm && cd dsh-zcode-farm
+node test/run.mjs                        # 2 个套件、23 项检查
+node tools/ordering-replay.mjs           # 图背后的排序对照表
+node tools/boot-check.mjs --port 32041   # 真装一次、真启动一次（需要一个 harness）
+```
+
+关于 `dsh-comfyui` 的几条，是拿它**已发布的包**核的，不是拿本仓库：
+
+```bash
+npm view dsh-comfyui version                # 0.5.1
+npm pack dsh-comfyui@0.5.1 && tar xzf dsh-comfyui-0.5.1.tgz
+grep -n baseUrl package/lib/config.js       # 一个字符串，不是列表
+grep -n "constructor(baseUrl" package/lib/comfyui.js
+```
+
+```text
+9:    baseUrl: z.string().default('http://127.0.0.1:8188'),
+71:    constructor(baseUrl, apiKey, connectTimeoutMs, maxMediaBytes) {
+```
+
+以上命令在 2026-09-22 对 `dsh-comfyui@0.5.1` 实跑过。
 
 ---
 
