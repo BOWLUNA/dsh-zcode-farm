@@ -46,13 +46,20 @@ for (const file of files) {
     continue
   }
   console.log(`  ${fail === 0 ? '✅' : '❌'} ${file}  (${pass} 通过, ${fail} 失败)`)
+  // ⚠️ 每个套件都要打一行以 `结果:` 开头的摘要 —— `tools/verify-doc-numbers.mjs`
+  //    是按这种行的**条数**去数「跑过几个套件」的，并与 test/ 下的 *.test.mjs 文件数对照。
+  //    只打一行总计的话，那个对照会恒等于 1，于是「有套件没被登记」永远发现不了，
+  //    而文档里写的套件数也会被判成错的（守卫会建议你去改文档 —— 那是把假数字写进文档）。
+  console.log(`结果: ${pass} 通过, ${fail} 失败  (${file})`)
   if (fail > 0) {
     console.log(out.split('\n').filter((line) => !line.startsWith('    ')).join('\n'))
   }
 }
 
 console.log('')
-console.log(`结果: ${totalPass} 通过, ${totalFail} 失败  (${files.length} 套件)`)
+// 总计**不能**也用 `结果:` 前缀 —— 守卫会把摘要行数当成套件数、把 pass+fail 逐行累加，
+// 那样总计会被重复计入（23 项变 46 项）。总计用 `合计:`。
+console.log(`合计: ${totalPass} 通过, ${totalFail} 失败  (${files.length} 套件)`)
 if (unreadable > 0) {
   console.error(`\n有 ${String(unreadable)} 个套件的输出无法解析 —— 检查数不可信，按失败处理。`)
   process.exit(1)

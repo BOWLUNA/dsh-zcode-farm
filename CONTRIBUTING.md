@@ -11,7 +11,7 @@
 
 ## Run these before every commit
 
-The suite is **1 suite, 15 checks** — all six commands below must be green.
+The suite is **2 suites, 23 checks** — all six commands below must be green.
 
 ```bash
 node test/run.mjs                                    # suite and check counts

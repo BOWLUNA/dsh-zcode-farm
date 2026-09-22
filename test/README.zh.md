@@ -2,7 +2,7 @@
 
 [English](README.md) | **中文**
 
-> **1 个套件**、**15 项检查**。全部跑一遍：`node test/run.mjs`。
+> **2 个套件**、**23 项检查**。全部跑一遍：`node test/run.mjs`。
 
 ## 覆盖什么
 

@@ -2,7 +2,7 @@
 
 **English** | [中文](README.zh.md)
 
-> **1 suite**, **15 checks**. Run them all with `node test/run.mjs`.
+> **2 suites**, **23 checks**. Run them all with `node test/run.mjs`.
 
 ## What is covered
 

@@ -30,7 +30,7 @@
 ## Before you commit
 
 ```bash
-node test/run.mjs                                  # 1 suite, 15 checks
+node test/run.mjs                                  # 2 suites, 23 checks
 node tools/verify-translation-pairing.mjs --write
 node tools/verify-doc-numbers.mjs
 bash -n install.sh && bash -n uninstall.sh

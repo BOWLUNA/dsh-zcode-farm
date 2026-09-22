@@ -2,7 +2,25 @@
 
 **English** | [中文](README.zh.md)
 
+[![test](https://github.com/BOWLUNA/dsh-zcode-farm/actions/workflows/test.yml/badge.svg)](https://github.com/BOWLUNA/dsh-zcode-farm/actions/workflows/test.yml)
+[![license](https://img.shields.io/badge/license-MIT-6b7a4f?style=flat-square)](LICENSE)
+[![dsh](https://img.shields.io/badge/dsh-%3E%3D0.1.5--rc.2%20%3C0.2.0--0-6b7a4f?style=flat-square)](package.json)
+[![node](https://img.shields.io/badge/node-%3E%3D22.19-6b7a4f?style=flat-square)](package.json)
+
 > Let the DeepSeek Harness agent see a **whole farm** of ComfyUI instances and dispatch each job to the idlest one.
+
+```bash
+dsh plugin --profile web add dsh-zcode-farm
+```
+
+![How the farm picks an instance](docs/ordering-replay.svg)
+
+| | `dsh-comfyui` (77★) | **this plugin** |
+| --- | --- | --- |
+| Endpoints it can address | one | **many, probed concurrently** |
+| Queue depth | not modelled | **weighted into the ranking** |
+| When the job lands | on that one instance | on the instance with the **most free VRAM and an empty queue** |
+| Writes to ComfyUI | yes | **yes (`comfyui_farm_run`), but reading is enough** |
 
 Zero runtime dependencies · Node ≥ 22 · MIT
 
@@ -86,13 +104,35 @@ busy large one.
 
 ## Relationship to `dsh-comfyui`: complementary, not competing
 
-| | `dsh-comfyui` | `dsh-zcode-farm` |
-| --- | --- | --- |
-| Scope | **one** endpoint | **a whole** farm |
-| Strength | workflow library, skill packs, canvas, asset panel | awareness, selection, dispatch |
-| Assembly row id | `comfyui` | `comfyui-farm` |
+| | `dsh-comfyui` (77★) | `dsh-zcode-farm` | How it is checked |
+| --- | --- | --- | --- |
+| Scope | **one** endpoint | **a whole** farm | `test/fixtures/farm-snapshot-2026-09-21.json` (6 endpoints) |
+| Strength | workflow library, skill packs, canvas, asset panel | awareness, selection, dispatch | `src/farm.js`, three tools |
+| How a job is routed | wherever the single endpoint is | ranked by `free VRAM − depth × weight` | `test/ordering.test.mjs`, `tools/ordering-replay.mjs` |
+| Assembly row id | `comfyui` | `comfyui-farm` | `cordis.patch.yml` |
 
 The row ids differ, so **both can be installed side by side**. Neither depends on the other.
+
+---
+
+## Relationship to ZCode
+
+**This repository is self-developed — there is no ZCode code lineage.** ZCode
+(`zai-org/ZCode`, `zai-org/GLM-skills`) is credited here as a *source of inspiration for the
+engineering conventions this project follows*, not as a dependency: nothing in the install
+path, the runtime, or the acceptance checks requires it, and no third-party vendor key is
+involved anywhere in this repository.
+
+Most cells below are therefore deliberately blank rather than filled with something invented.
+
+| What ZCode has | What this plugin took | What this plugin adds beyond it | Evidence |
+| --- | --- | --- | --- |
+| Nothing for ComfyUI farm scheduling | —— | the whole probe → rank → dispatch loop | `src/farm.js`, `test/ordering.test.mjs` |
+| A memory-extraction sub-agent (`core/src/memory/extraction.ts`) | —— (different domain) | —— | —— |
+| Bilingual paired documents | adopted as the house convention | **extended to cover figure files** (`*.svg`), so a diagram can't drift from its translation | `docs/ordering-replay.i18n.yaml` |
+| Guard discipline — runnable checks before every commit | adopted as the house convention | **extended to six guards, the sixth being a real-boot check** | `tools/boot-check.mjs`, `AGENTS.md` |
+
+A row reading `——` is an honest blank, not an oversight.
 
 ---
 
@@ -148,7 +188,7 @@ MIT
 
 ## Status
 
-- **1 suite**, **15 checks** — run `node test/run.mjs`
+- **2 suites**, **23 checks** — run `node test/run.mjs`
 - Declared compatibility: `>=0.1.5-rc.2 <0.2.0-0` (see `engines.dsh` and the peer range)
 - Pin the version to bypass pnpm's release cooldown: `dsh plugin --profile web add dsh-zcode-farm@1.0.1`
 - Verified against five SSH-tunnelled ComfyUI instances plus one switchable forwarder

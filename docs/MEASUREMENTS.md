@@ -70,3 +70,21 @@ A `--patch` probe ran inside a real instance and asked the host directly:
 
 That is a stronger claim than `--dump-config`, which only composes configuration and never applies
 the plugin.
+
+## M6. What the ranking rule actually decides
+
+`score = free VRAM − queue depth × weight`, default weight 1000. Replayed by
+`tools/ordering-replay.mjs` over the fixture in `test/fixtures/`:
+
+| Fixture | weight 0 | weight 11.9 | weight 12.1 | weight 1000 |
+| --- | --- | --- | --- | --- |
+| A · measured 2026-09-21 | `gpu-18303` | `gpu-18303` | `gpu-18303` | `gpu-18303` |
+| B · constructed conflict | A | A | B | B |
+
+The measured fixture gives the same answer at every weight, because the empty queue and the most
+free VRAM happened to be the same machine that day. **That run cannot distinguish the two rules**,
+so it is not evidence for "the queue dominates the ranking" — which is what it looked like.
+The constructed fixture is where the two separate: the crossover sits at weight 12 (`20 − w`
+meets `8`), so the default of 1000 makes the queue effectively absolute rather than weighted.
+
+Guarded by `test/ordering.test.mjs`, 8 checks.

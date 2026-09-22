@@ -1,0 +1,14 @@
+{
+  "note": "真实读数，不是构造的。来源：`04-dsh-comfyui-farm-开发与验收记录.md` §「已探测的农场」——2026-09-21 用本插件自己的探针取的一个瞬间。",
+  "taken_at": "2026-09-21",
+  "probe": "src/farm.js probeAll()，对本机 6 条 SSH 隧道端点各打一次 /system_stats + /queue",
+  "instances": [
+    { "id": "primary",    "gpu": "cuda:0 NVIDIA GeForce RTX",     "vramTotalGb": 33.7,  "vramFreeGb": 0.8,  "queueRunning": 1, "queuePending": 0, "running": ["video/audio (16 节点)"] },
+    { "id": "gpu-18100",  "gpu": "cuda:0 NVIDIA GeForce RTX",     "vramTotalGb": 33.7,  "vramFreeGb": 0.8,  "queueRunning": 1, "queuePending": 0, "running": ["video/audio (16 节点)"] },
+    { "id": "gpu-18300",  "gpu": "cuda:0 NVIDIA GeForce RTX",     "vramTotalGb": 33.7,  "vramFreeGb": 0.8,  "queueRunning": 1, "queuePending": 0, "running": ["video/audio (16 节点)"] },
+    { "id": "gpu-18301",  "gpu": "cuda:0 NVIDIA GeForce RTX",     "vramTotalGb": 33.7,  "vramFreeGb": 0.9,  "queueRunning": 1, "queuePending": 0, "running": ["video/audio (17 节点)"] },
+    { "id": "gpu-18302",  "gpu": "cuda:0 NVIDIA GeForce RTX",     "vramTotalGb": 33.7,  "vramFreeGb": 0.5,  "queueRunning": 1, "queuePending": 0, "running": ["video/audio (15 节点)"] },
+    { "id": "gpu-18303",  "gpu": "cuda:0 NVIDIA RTX PRO 6000",    "vramTotalGb": 102.0, "vramFreeGb": 99.4, "queueRunning": 0, "queuePending": 0, "running": [] }
+  ],
+  "observed_verdict": "gpu-18303 被判为 ✅ 最优，理由「队列空、空闲 99.4 GB」；记录里没有第二个候选被认真比较过。"
+}

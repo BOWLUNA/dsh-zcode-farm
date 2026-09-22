@@ -116,21 +116,51 @@ function findDsh() {
   envFail(
     '找不到 harness。试过：--dsh-bin、$DSH_INSTALL、<repo>/node_modules/@deepseek-ai/dsh、PATH 上的 dsh。',
     [
-      'export DSH_INSTALL="C:/BL/AI/dsh-harness"          # 桌面版 harness 安装根',
-      'export PATH="C:/BL/AI/dsh-harness/harness/.desktop-bin:$PATH"   # 自带 pnpm',
-      'N="C:/BL/AI/dsh-harness/node_modules/node/bin/node.exe"',
-      'D="C:/BL/AI/dsh-harness/node_modules/@deepseek-ai/dsh/lib/bin.js"',
-      '或（CI / 本机任意环境）：npm install --no-save --no-audit --no-fund @deepseek-ai/dsh@0.1.6-alpha.2',
+      '# 首选：用你自己的实测实例（每个窗口一份，互不干扰）',
+      'export DSH_INSTALL="C:/Users/BOWLUNA/Desktop/DSHTEST/farm/dsh"',
+      'export PATH="$DSH_INSTALL/node_modules/.bin:$PATH"   # 就地装的 pnpm 也在这里',
+      'N="C:/Users/BOWLUNA/.workbuddy/binaries/node/versions/22.22.2-3/node.exe"',
+      'D="$DSH_INSTALL/node_modules/@deepseek-ai/dsh/lib/bin.js"',
+      '',
+      '# 或：让本仓库自带一份（CI 就是这一路）',
+      'npm install --no-save --no-audit --no-fund @deepseek-ai/dsh@0.1.6-alpha.2',
+      '',
+      '# 桌面版那份共享 harness 也能用，但**不要拿它做实验** —— 用户日常在用：',
+      '#   C:/BL/AI/dsh-harness（DSH_HOME 是它下面的 harness/）',
     ],
   )
 }
 
-/** 统一的调用形态：要么直接执行一个 dsh launcher，要么用当前 node 跑 bin.js。 */
+/** 统一的调用形态：`.js` 用当前 node 跑；Windows 的 `.cmd/.bat` 必须经 cmd.exe；其余直接执行。 */
 function runner(dshPath) {
   if (/\.(mjs|js)$/i.test(dshPath)) {
     return { command: process.execPath, args: [dshPath], label: `${process.execPath} ${dshPath}` }
   }
+  // ⚠️ Windows 上不能直接 spawn 一个 .cmd/.bat —— Node 会以 `spawn EINVAL` 收场
+  //    （实测：PATH 上命中 `dsh.cmd` 时，守卫崩在 spawn 里，既没干活也没干净地 exit 2）。
+  //    正确姿势是交给 cmd.exe。
+  if (process.platform === 'win32' && /\.(cmd|bat)$/i.test(dshPath)) {
+    return {
+      command: process.env.ComSpec ?? 'cmd.exe',
+      args: ['/d', '/s', '/c', dshPath],
+      label: dshPath,
+    }
+  }
   return { command: dshPath, args: [], label: dshPath }
+}
+
+/** spawn 失败（EINVAL/ENOENT 等）要变成可读的 exit 2，而不是一段栈。 */
+function safeSpawn(command, args, options) {
+  try {
+    return spawn(command, args, options)
+  } catch (err) {
+    envFail(
+      `无法启动 harness（${command}）：${String(err.code ?? err.message)}`,
+      ['多半是路径形式不对。用 --dsh-bin 直接指到 bin.js：',
+        '  --dsh-bin "C:/Users/BOWLUNA/Desktop/DSHTEST/farm/dsh/node_modules/@deepseek-ai/dsh/lib/bin.js"'],
+    )
+    return null
+  }
 }
 
 const dsh = findDsh()
@@ -170,7 +200,7 @@ const cleanup = () => {
 
 function run(args, options = {}) {
   return new Promise((resolvePromise) => {
-    const child = spawn(dsh.command, [...dsh.args, ...args], {
+    const child = safeSpawn(dsh.command, [...dsh.args, ...args], {
       cwd: REPO,
       env: process.env,
       stdio: ['ignore', 'pipe', 'pipe'],
@@ -248,7 +278,7 @@ console.log('✓ B 通过')
 console.log('')
 console.log('── 断言 C · 真启动并在超时内连上端口 ──')
 
-const boot = spawn(dsh.command, [...dsh.args, '--profile', 'web', '--port', String(PORT), '--no-open'], {
+const boot = safeSpawn(dsh.command, [...dsh.args, '--profile', 'web', '--port', String(PORT), '--no-open'], {
   cwd: REPO,
   env: process.env,
   stdio: ['ignore', 'pipe', 'pipe'],

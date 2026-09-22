@@ -27,7 +27,28 @@ const problems = []
 /** Run the suite and return the real totals. */
 function measure() {
   // stderr 单独吞掉：套件里有一些故意失败的演示（比如 session-trace 的 --expect 反例），它们不是这里的问题。
-  const output = execFileSync(process.execPath, [join(REPO, 'test', 'run.mjs')], { cwd: REPO, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] })
+  //
+  // ⚠️ 必须自己接住非 0 退出：`execFileSync` 遇到非 0 会**直接抛栈**，
+  //    于是「套件输出无法解析（reporter 变了）」这种场景会以一段
+  //    `Error: Command failed: … node test/run.mjs` 收场 —— 抓是抓到了，
+  //    但看不出是哪道闸门、为什么。同一族的问题在本仓库已经付过一次学费
+  //    （见 test/run.mjs 文件头：Node 24 换 reporter 让整道闸门假绿）。
+  let output
+  let suiteExit = 0
+  try {
+    output = execFileSync(process.execPath, [join(REPO, 'test', 'run.mjs')], {
+      cwd: REPO,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    })
+  } catch (err) {
+    output = String(err.stdout ?? '')
+    suiteExit = typeof err.status === 'number' ? err.status : -1
+    if (output === '') {
+      problems.push(`test/run.mjs 以 exit ${String(suiteExit)} 退出且没有任何 stdout —— 无法测量真实检查数。`)
+      return { checks: NaN, suiteRuns: NaN, suiteFiles: NaN, skipped: false }
+    }
+  }
   // Node < 22.15 没有 zstd，session-trace 套件会跳过一部分检查 —— 于是同一份代码在不同运行时上检查数不同。
   // 文档写的是**完整运行时**的数字（那才是开发者会看到的），所以这里只在"跳过"时放宽下界并说明原因。
   const skipped = output.includes('zstd 部分已跳过')
@@ -39,6 +60,12 @@ function measure() {
       checks += Number(match[1]) + Number(match[2])
       suites.push(match[0])
     }
+  }
+  if (suiteExit !== 0) {
+    problems.push(
+      `test/run.mjs 以 exit ${String(suiteExit)} 退出 —— 摘要不可信，因此下面的数字比对一律不成立。\n`
+        + '    最可能的原因：某个套件的输出无法解析（`--test-reporter=tap` 被去掉了？Node 换默认 reporter 了？）。',
+    )
   }
   const files = readdirSync(join(REPO, 'test')).filter((name) => name.endsWith('.test.mjs'))
   return { checks, suiteRuns: suites.length, suiteFiles: files.length, skipped }

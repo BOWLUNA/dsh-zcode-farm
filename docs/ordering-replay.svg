@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 372" width="680" height="372" role="img" aria-label="How the farm picks an instance">
+  <!-- English | ordering-replay.zh.svg -->
+  <desc>English | <tspan>中文</tspan> — ordering-replay.zh.svg</desc>
+  <defs>
+    <pattern id="dots" width="7" height="7" patternUnits="userSpaceOnUse">
+      <circle cx="1.6" cy="1.6" r="0.75" fill="#D9CFB8"/>
+    </pattern>
+  </defs>
+  <rect width="680" height="372" fill="#FAF7EF"/>
+  <rect x="0" y="0" width="680" height="66" fill="url(#dots)"/>
+  <g font-family="ui-sans-serif, -apple-system, Segoe UI, Noto Sans SC, sans-serif" fill="#35322E">
+    <text x="26" y="34" font-size="19" font-weight="600">How the farm picks an instance</text>
+    <text x="26" y="54" font-size="12" fill="#6C655B" font-family="ui-monospace, SFMono-Regular, Menlo, monospace">score = free VRAM − queue depth × weight   (default weight 1000)</text>
+    <rect x="26" y="92" width="300" height="196" fill="#FFFFFF" stroke="#E2D9C6" rx="6"/>
+    <text x="40" y="116" font-size="12.5" font-weight="600">A · the one time we measured it (2026-09-21)</text>
+    <text x="40" y="140" font-size="10.5" fill="#57514A" font-family="ui-monospace, monospace">primary</text>
+    <rect x="134" y="129" width="2" height="10" fill="#CFC6B2" rx="2"/>
+    <text x="142" y="140" font-size="10" fill="#6C655B">0.8 GB / q1</text>
+    <text x="40" y="162" font-size="10.5" fill="#57514A" font-family="ui-monospace, monospace">gpu-18100</text>
+    <rect x="134" y="151" width="2" height="10" fill="#CFC6B2" rx="2"/>
+    <text x="142" y="162" font-size="10" fill="#6C655B">0.8 GB / q1</text>
+    <text x="40" y="184" font-size="10.5" fill="#57514A" font-family="ui-monospace, monospace">gpu-18300</text>
+    <rect x="134" y="173" width="2" height="10" fill="#CFC6B2" rx="2"/>
+    <text x="142" y="184" font-size="10" fill="#6C655B">0.8 GB / q1</text>
+    <text x="40" y="206" font-size="10.5" fill="#57514A" font-family="ui-monospace, monospace">gpu-18301</text>
+    <rect x="134" y="195" width="2" height="10" fill="#CFC6B2" rx="2"/>
+    <text x="142" y="206" font-size="10" fill="#6C655B">0.9 GB / q1</text>
+    <text x="40" y="228" font-size="10.5" fill="#57514A" font-family="ui-monospace, monospace">gpu-18302</text>
+    <rect x="134" y="217" width="2" height="10" fill="#CFC6B2" rx="2"/>
+    <text x="142" y="228" font-size="10" fill="#6C655B">0.5 GB / q1</text>
+    <text x="40" y="250" font-size="10.5" fill="#57514A" font-family="ui-monospace, monospace">gpu-18303</text>
+    <rect x="134" y="239" width="146" height="10" fill="#77854F" rx="2"/>
+    <text x="286" y="250" font-size="10" fill="#6C655B">99.4 GB / q0</text>
+    <text x="292" y="250" font-size="10" fill="#5F6B3E" font-weight="600">✓</text>
+    <text x="40" y="274" font-size="10.5" fill="#8A5A3B" font-weight="600">same answer for every weight: gpu-18303</text>
+    <rect x="350" y="92" width="304" height="196" fill="#FFFFFF" stroke="#E2D9C6" rx="6"/>
+    <text x="364" y="116" font-size="12.5" font-weight="600">B · where the two rules disagree (constructed)</text>
+    <line x1="396" y1="234" x2="596" y2="234" stroke="#E2D9C6"/>
+    <text x="356" y="158" font-size="10" fill="#6C655B">20</text>
+    <text x="356" y="206" font-size="10" fill="#6C655B">8</text>
+    <text x="356" y="238" font-size="10" fill="#6C655B">0</text>
+    <line x1="396" y1="154" x2="596" y2="274" stroke="#B07A52" stroke-width="1.6"/>
+    <line x1="396" y1="202" x2="596" y2="202" stroke="#77854F" stroke-width="1.6"/>
+    <circle cx="476" cy="202" r="3.4" fill="#FFFFFF" stroke="#35322E" stroke-width="1.4"/>
+    <line x1="476" y1="202" x2="476" y2="260" stroke="#35322E" stroke-dasharray="3 3" stroke-width="1"/>
+    <text x="460" y="270" font-size="10" fill="#35322E">crossover = 12</text>
+    <text x="396" y="270" font-size="10" fill="#6C655B">weight 0</text>
+    <text x="578" y="270" font-size="10" fill="#6C655B">30</text>
+    <text x="364" y="248" font-size="10" fill="#B07A52">A: 20 − w</text>
+    <text x="446" y="248" font-size="10" fill="#5F6B3E">B: 8</text>
+    <text x="364" y="270" font-size="10" fill="#6C655B">w=11.9 → A · w=12.1 → B</text>
+    <text x="500" y="116" font-size="10" fill="#6C655B">chosen: A / B</text>
+    <text x="26" y="356" font-size="10" fill="#8A8378">Every number here is computed from the measured fixture by tools/ordering-replay.mjs</text>
+  </g>
+</svg>

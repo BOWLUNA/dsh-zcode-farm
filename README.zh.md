@@ -2,7 +2,25 @@
 
 [English](README.md) | **中文**
 
+[![test](https://github.com/BOWLUNA/dsh-zcode-farm/actions/workflows/test.yml/badge.svg)](https://github.com/BOWLUNA/dsh-zcode-farm/actions/workflows/test.yml)
+[![license](https://img.shields.io/badge/license-MIT-6b7a4f?style=flat-square)](LICENSE)
+[![dsh](https://img.shields.io/badge/dsh-%3E%3D0.1.5--rc.2%20%3C0.2.0--0-6b7a4f?style=flat-square)](package.json)
+[![node](https://img.shields.io/badge/node-%3E%3D22.19-6b7a4f?style=flat-square)](package.json)
+
 > 让 DeepSeek Harness 的 Agent 看见**整个** ComfyUI 农场，并把每个任务派给最空闲的那一台。
+
+```bash
+dsh plugin --profile web add dsh-zcode-farm
+```
+
+![农场怎么挑实例](docs/ordering-replay.zh.svg)
+
+| | `dsh-comfyui`（77★） | **本插件** |
+| --- | --- | --- |
+| 能寻址的端点 | 一个 | **多个，并发探测** |
+| 队列深度 | 不建模 | **加权进排序** |
+| 任务落在哪 | 就那一台 | **空闲显存最多且队列为空**的那台 |
+| 会不会写 ComfyUI | 会 | **会（`comfyui_farm_run`），但只读也够用** |
 
 零运行时依赖 · 适配 Node ≥ 22 · MIT
 
@@ -89,14 +107,34 @@ dsh plugin --profile web add dsh-zcode-farm
 
 ## 与 `dsh-comfyui` 的关系：互补，可共存
 
-| | `dsh-comfyui` | `dsh-zcode-farm` |
-| --- | --- | --- |
-| 管的范围 | **一个**端点 | **一整个**农场 |
-| 强项 | 工作流库、技能包、画布、资产面板 | 状态感知、选实例、派发 |
-| 装配行 id | `comfyui` | `comfyui-farm` |
+| | `dsh-comfyui`（77★） | `dsh-zcode-farm` | 怎么核 |
+| --- | --- | --- | --- |
+| 管的范围 | **一个**端点 | **一整个**农场 | `test/fixtures/farm-snapshot-2026-09-21.json`（6 个端点） |
+| 强项 | 工作流库、技能包、画布、资产面板 | 状态感知、选实例、派发 | `src/farm.js`、三个工具 |
+| 任务怎么落地 | 单端点在哪就发哪 | 按「空闲显存 − 队列深 × 权重」排序 | `test/ordering.test.mjs`、`tools/ordering-replay.mjs` |
+| 装配行 id | `comfyui` | `comfyui-farm` | `cordis.patch.yml` |
 
 两行 id 不同，**可以同时装配**：用 `dsh-comfyui` 管深度体验，用本插件决定"这活派给谁"。
 也可以只用其中一个。本插件不依赖 `dsh-comfyui`，反之亦然。
+
+---
+
+## 与 ZCode 的关系
+
+**本仓库是自研的 —— 与 ZCode 没有代码血缘。** ZCode（`zai-org/ZCode`、`zai-org/GLM-skills`）
+在这里的角色是**工程约定的灵感来源**，不是依赖：安装路径、运行时、验收检查里没有任何一处
+需要它，本仓库也**不涉及任何第三方厂商的 key**。
+
+因此下表多数格子是**故意留白**的，而不是填上编出来的东西。
+
+| ZCode 有什么 | 本插件取了什么 | 本插件多了什么（**优于**在哪） | 证据 |
+| --- | --- | --- | --- |
+| 多实例 ComfyUI 调度：无 | —— | 整个「探测 → 排序 → 派发」闭环 | `src/farm.js`、`test/ordering.test.mjs` |
+| 记忆抽取子代理（`core/src/memory/extraction.ts`） | ——（不同领域） | —— | —— |
+| 双语配对文档 | 作为本工作区的约定沿用 | **扩展到了图文件**（`*.svg`）—— 示意图与译文不会再各自漂移 | `docs/ordering-replay.i18n.yaml` |
+| 守卫纪律 —— 提交前跑得动的检查 | 作为本工作区的约定沿用 | **扩展到六道，第六道是真启动检查** | `tools/boot-check.mjs`、`AGENTS.md` |
+
+写着 `——` 的行是**如实留白**，不是漏填。
 
 ---
 
@@ -148,7 +186,7 @@ MIT
 
 ## 状态
 
-- **1 个套件**、**15 项检查** —— 跑 `node test/run.mjs`
+- **2 个套件**、**23 项检查** —— 跑 `node test/run.mjs`
 - 声明兼容范围：`>=0.1.5-rc.2 <0.2.0-0`（见 `engines.dsh` 与 peer 范围）
 - 钉住版本可绕过 pnpm 的发布冷却期：`dsh plugin --profile web add dsh-zcode-farm@1.0.1`
 - 已在 5 个 SSH 隧道实例 + 1 个可切换转发口上验证
