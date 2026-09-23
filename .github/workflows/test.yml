@@ -2,9 +2,16 @@
 # 也真的因为「解析 TAP 没钉 reporter」让 node-24 的腿连续红过四次（见 tools/boot-check.sh 与
 # test/run.mjs 的文件头注释）。最近补上的是第 6 道：真装 + 真启动。
 #
-# `tools/verify-version-consistency.mjs` 会从本文件里读 `@deepseek-ai/dsh@<version>` 的钉定，
+# `tools/verify-version-consistency.mjs` 会从本文件里读**第一个** `@deepseek-ai/dsh@<version>` 的钉定，
 # 断言它落在 `package.json` 的 `engines.dsh` 范围里。CI 里传的是 `--dsh ${{ matrix.dsh }}`。
-# 已知钉定：@deepseek-ai/dsh@0.1.6-alpha.2（范围为 >=0.1.5-rc.2 <0.2.0-0，两者都覆盖）。
+#
+# 三条 dsh 线（矩阵里三条腿各跑一条）：
+#   0.1.5-rc.2      声明范围的下界
+#   0.1.6-alpha.2   ← 脚本会读到的那一条（本仓库开发期一直用它）
+#   0.1.7-alpha.2   npm 的 alpha 标签当前值。2026-09-23 实测过：能装能起、
+#                   **工具注册 3/3**、stderr 0 字节（探针见 DSHTEST/farm/probe-017.log）。
+#                   它必须同时出现在 engines.dsh 里 —— 否则本脚本会判定 CI 钉的版本
+#                   落在声明之外，而那正是它该抓的事。
 name: test
 
 on:
@@ -25,6 +32,9 @@ jobs:
           - os: ubuntu-latest
             node-version: '24'
             dsh: '0.1.5-rc.2'
+          - os: ubuntu-latest
+            node-version: '24'
+            dsh: '0.1.7-alpha.2'
     steps:
       - uses: actions/checkout@v4
 

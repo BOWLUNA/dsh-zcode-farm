@@ -345,13 +345,68 @@ if (stable === false) {
 console.log(`✓ C 通过（端口 ${String(PORT)} 应答并在 ${String(STABLE_MS)}ms 稳定窗口后仍应答、进程仍活着）`)
 
 console.log('')
-console.log('── 断言 D · 端口应答那一刻 stderr 为空 ──')
-console.log(`  stderr 字节=${String(Buffer.byteLength(stderrAtAnswer, 'utf8'))}`)
+console.log('── 断言 D · 端口应答那一刻，stderr 里不许有致命模式 ──')
+/**
+ * ★ 断言 D 的正确形态是**白名单式「不许有致命模式」**，而不是「必须一个字都没有」。
+ *
+ * R2 定的原话是「拿到端口那一刻 stderr 为空」。那条太粗：插件自己声明的、带明确修复指引的
+ * **降级告警**会被判成失败。姊妹仓 `dsh-zcode-rewind` 就是这么红的 —— 266 字节 stderr，
+ * 内容是它自己写的「@deepseek-ai/dsh-tools 不可达:工具注册跳过(捕获钩子仍工作)。修复:…」，
+ * 那是优雅降级，不是故障。而当时的修法只能是把断言 D 删掉 —— 那是把闸门关掉。
+ *
+ * 所以这里分三档，**逐条列出、可审计**：
+ *   ① 命中 FATAL_PATTERNS            ⇒ 失败（端口应答了也不代表插件树是好的）
+ *   ② 命中 ALLOWED_PATTERNS          ⇒ 通过，但把命中的原文打出来
+ *   ③ 既不是致命、也不在白名单里      ⇒ **失败**，并告诉你「要么修掉它，要么带着理由加进白名单」
+ * ③ 是关键：它让白名单必须被**有意识地维护**，而不是退化成「忽略一切 stderr」。
+ */
+const FATAL_PATTERNS = [
+  { re: /ERR_MODULE_NOT_FOUND/, why: '装配行/依赖解析失败 —— 插件树没起来' },
+  { re: /Cannot find package/, why: '同上，另一种措辞' },
+  { re: /failed to load/i, why: '插件树加载失败' },
+  { re: /failed to import/i, why: '同上（dsh 在插件 import 失败时用这句）' },
+  { re: /is already registered/, why: '工具名冲突 —— 本生态真踩过，整个 profile 起不来' },
+  { re: /SyntaxError/, why: '模块语法错误' },
+  { re: /Cannot read properties of undefined/, why: '宿主 API 变了（例如 0.1.7 的 preset 面改动）' },
+]
+
+/** 允许的降级告警：**逐条列，每条都要写为什么可接受**。不许写「忽略一切」。 */
+const ALLOWED_PATTERNS = [
+  // farm 目前没有任何已知的可接受降级告警 —— 每次实测 stderr 都是 0 字节。
+  // 这个数组保持为空是有意的：将来真出现降级告警时，它必须**带着理由**被加进来。
+]
+
+const stderrBytes = Buffer.byteLength(stderrAtAnswer, 'utf8')
+console.log(`  stderr 字节=${String(stderrBytes)}`)
 if (stderrAtAnswer !== '') {
-  console.error(stderrAtAnswer.split('\n').slice(0, 20).join('\n'))
-  fail('D', '启动往 stderr 写了东西 —— 端口虽然应答了，进程已经在报错（这正是 --dump-config 抓不到的那一类）')
+  console.log('  --- 原文 ---')
+  console.log(stderrAtAnswer.split('\n').slice(0, 20).join('\n'))
 }
-console.log('✓ D 通过')
+
+const fatal = FATAL_PATTERNS.filter(({ re }) => re.test(stderrAtAnswer))
+if (fatal.length > 0) {
+  fail(
+    'D',
+    `stderr 里有 ${String(fatal.length)} 类致命模式（端口虽然应答了，插件树并不是好的）：\n`
+      + fatal.map((f) => `    ${String(f.re)}  —— ${f.why}`).join('\n'),
+  )
+}
+
+const allowed = ALLOWED_PATTERNS.filter(({ re }) => re.test(stderrAtAnswer))
+const unrecognised = stderrAtAnswer !== '' && allowed.length === 0
+if (unrecognised) {
+  fail(
+    'D',
+    'stderr 既不是空的、也不在白名单里。两条路，选一条：\n'
+      + '    ① 修掉它（首选）；\n'
+      + '    ② 如果它确实是**优雅降级**，把它连同「为什么可接受」加进本文件的 ALLOWED_PATTERNS。\n'
+      + '    不要为了让这条变绿而放宽断言 —— 那等于把这道闸门关掉。',
+  )
+}
+if (allowed.length > 0) {
+  console.log(`  （命中 ${String(allowed.length)} 条白名单降级告警：${allowed.map((a) => String(a.re)).join(', ')}）`)
+}
+console.log('✓ D 通过（无致命模式；非空 stderr 也已逐条白名单化）')
 
 cleanup()
 console.log('')
