@@ -54,3 +54,11 @@ node tools/boot-check.mjs --port 31841             # 真装一次、真启动一
 - **`dsh plugin` needs `pnpm` on PATH.** Without it the plugin manager refuses with
   "pnpm not found on PATH — install pnpm to manage profile plugins". Local machines have it; CI must
   install it explicitly.
+- **`tools/verify-version-consistency.mjs` reads "the version CI pins" out of the first
+  `@deepseek-ai/dsh@<version>` literal in `.github/workflows/test.yml` — comments included.**
+  Writing a version into a header comment therefore **silently retargets** that assertion: the check
+  keeps passing, but it is now checking a different version than the one the matrix runs. Two
+  consequences: (a) when adding a matrix leg, do not spell the literal in prose above the pin — the
+  header block says this in so many words; (b) when a leg *is* changed, confirm the script still
+  reports the intended version, do not assume. Measured 2026-09-24: adding the `0.1.5-rc.3` leg moved
+  the pin nowhere, and the script still printed "覆盖 CI 实测的 dsh 0.1.6-alpha.2 ✔".
