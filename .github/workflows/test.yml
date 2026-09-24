@@ -5,8 +5,18 @@
 # `tools/verify-version-consistency.mjs` 会从本文件里读**第一个** `@deepseek-ai/dsh@<version>` 的钉定，
 # 断言它落在 `package.json` 的 `engines.dsh` 范围里。CI 里传的是 `--dsh ${{ matrix.dsh }}`。
 #
-# 三条 dsh 线（矩阵里三条腿各跑一条）：
+# 四条 dsh 线（矩阵里四条腿各跑一条）：
 #   0.1.5-rc.2      声明范围的下界
+#   0.1.5-rc.3      ★ npm 的 `latest` 标签当前值 —— 也就是**用户不指定版本时实际装到的那个**。
+#                   加它的理由不是"多发一条腿"，而是：范围声明覆盖它、却从来没有跑过它，
+#                   等于在测一个没人装的组合、同时把没人验过的组合发出去。
+#                   2026-09-24 在 DSHTEST/_v015rc3（真 0.1.5-rc.3 + pnpm 12.6.0 + node 22.22.2）实测：
+#                   `plugin add` exit 0 / `--dump-config` exit 0 · 542 行 · stderr 0 字节 /
+#                   真启动 t=3000·5000ms 应答 · stderr 0 字节 / 收工端口已释放；
+#                   `boot-check.mjs` 四条断言 A/B/C/D 全 PASS。
+#                   ⚠️ 下面这几行注释里**故意不写** `@deepseek-ai/dsh@<版本>` 这种字面量 ——
+#                   `tools/verify-version-consistency.mjs` 用正则抓本文件里**第一个**这种字面量
+#                   当作"CI 钉的版本"，在注释里写版本号会**静默改变**那条断言的标的。
 #   0.1.6-alpha.2   ← 脚本会读到的那一条（本仓库开发期一直用它）
 #   0.1.7-alpha.2   npm 的 alpha 标签当前值。2026-09-23 实测过：能装能起、
 #                   **工具注册 3/3**、stderr 0 字节（探针见 DSHTEST/farm/probe-017.log）。
@@ -32,6 +42,10 @@ jobs:
           - os: ubuntu-latest
             node-version: '24'
             dsh: '0.1.5-rc.2'
+          # ★ npm `latest`。范围声明覆盖它，此前却从没在它上面跑过 —— 声明说了真话、没人验过。
+          - os: ubuntu-latest
+            node-version: '24'
+            dsh: '0.1.5-rc.3'
           - os: ubuntu-latest
             node-version: '24'
             dsh: '0.1.7-alpha.2'
